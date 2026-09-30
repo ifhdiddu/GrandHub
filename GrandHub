@@ -1,0 +1,475 @@
+local plr = game:GetService("Players").LocalPlayer
+local UIS = game:GetService("UserInputService")
+local TS = game:GetService("TweenService")
+local RS = game:GetService("ReplicatedStorage")
+local pg = plr:WaitForChild("PlayerGui")
+
+for _, g in ipairs(pg:GetChildren()) do
+    if g:IsA("ScreenGui") and (g.Name == "MiniHub" or g.Name == "GravityHub" or g.Name == "MeuMenu" or g.Name == "TesteUI") then
+        g:Destroy()
+    end
+end
+
+local autoFarmAtivo = false
+local autoFruitAtivo = false
+local autoUnlockAtivo = false
+local killCount = 0
+local missaoAtual = nil
+local ultimaTentativa = 0
+
+local BG = Color3.fromRGB(22,22,28)
+local SIDE = Color3.fromRGB(16,16,22)
+local EL = Color3.fromRGB(36,36,46)
+local AC = Color3.fromRGB(138,43,226)
+local TXT = Color3.fromRGB(240,240,240)
+local DIM = Color3.fromRGB(150,150,160)
+local RD = Color3.fromRGB(220,70,70)
+
+local sg = Instance.new("ScreenGui")
+sg.Name = "GravityHub"
+sg.ResetOnSpawn = false
+sg.IgnoreGuiInset = true
+sg.Parent = pg
+
+local win = Instance.new("Frame")
+win.Size = UDim2.new(0, 480, 0, 320)
+win.Position = UDim2.new(0.5, -240, 0.5, -160)
+win.BackgroundColor3 = BG
+win.BorderSizePixel = 0
+win.Active = true
+win.Visible = true
+win.Parent = sg
+Instance.new("UICorner", win).CornerRadius = UDim.new(0, 10)
+local ws = Instance.new("UIStroke", win)
+ws.Color = AC
+ws.Thickness = 1.5
+
+local tb = Instance.new("Frame", win)
+tb.Size = UDim2.new(1, 0, 0, 34)
+tb.BackgroundColor3 = SIDE
+tb.BorderSizePixel = 0
+Instance.new("UICorner", tb).CornerRadius = UDim.new(0, 10)
+
+local ttl = Instance.new("TextLabel", tb)
+ttl.Size = UDim2.new(1, -60, 1, 0)
+ttl.Position = UDim2.new(0, 14, 0, 0)
+ttl.BackgroundTransparency = 1
+ttl.Text = "Gravity Hub | Blox Fruits"
+ttl.TextColor3 = TXT
+ttl.Font = Enum.Font.GothamBold
+ttl.TextSize = 14
+ttl.TextXAlignment = Enum.TextXAlignment.Left
+
+local cb = Instance.new("TextButton", tb)
+cb.Size = UDim2.new(0, 26, 0, 26)
+cb.Position = UDim2.new(1, -34, 0.5, -13)
+cb.BackgroundColor3 = RD
+cb.Text = "X"
+cb.TextColor3 = Color3.fromRGB(255,255,255)
+cb.Font = Enum.Font.GothamBold
+cb.TextSize = 13
+cb.BorderSizePixel = 0
+Instance.new("UICorner", cb).CornerRadius = UDim.new(0, 6)
+
+local sb = Instance.new("Frame", win)
+sb.Size = UDim2.new(0, 100, 1, -44)
+sb.Position = UDim2.new(0, 10, 0, 42)
+sb.BackgroundColor3 = SIDE
+sb.BorderSizePixel = 0
+Instance.new("UICorner", sb).CornerRadius = UDim.new(0, 8)
+local sbL = Instance.new("UIListLayout", sb)
+sbL.Padding = UDim.new(0, 4)
+local sbP = Instance.new("UIPadding", sb)
+sbP.PaddingTop = UDim.new(0, 5)
+sbP.PaddingLeft = UDim.new(0, 5)
+sbP.PaddingRight = UDim.new(0, 5)
+
+local ca = Instance.new("Frame", win)
+ca.Size = UDim2.new(1, -125, 1, -52)
+ca.Position = UDim2.new(0, 118, 0, 42)
+ca.BackgroundTransparency = 1
+
+local pages = {}
+local tabs = {}
+
+local function mostrar(n)
+    for k, p in pairs(pages) do p.Visible = (k == n) end
+    for k, b in pairs(tabs) do b.BackgroundColor3 = (k == n) and AC or EL end
+end
+
+local function novaAba(nome, titulo)
+    local b = Instance.new("TextButton", sb)
+    b.Size = UDim2.new(1, 0, 0, 30)
+    b.BackgroundColor3 = EL
+    b.Text = "  " .. nome
+    b.TextColor3 = TXT
+    b.Font = Enum.Font.Gotham
+    b.TextSize = 12
+    b.TextXAlignment = Enum.TextXAlignment.Left
+    b.BorderSizePixel = 0
+    b.AutoButtonColor = false
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+    tabs[nome] = b
+    local p = Instance.new("Frame", ca)
+    p.Size = UDim2.new(1, 0, 1, 0)
+    p.BackgroundTransparency = 1
+    p.Visible = false
+    pages[nome] = p
+    local h = Instance.new("TextLabel", p)
+    h.Size = UDim2.new(1, 0, 0, 22)
+    h.BackgroundTransparency = 1
+    h.Text = titulo
+    h.TextColor3 = TXT
+    h.Font = Enum.Font.GothamBold
+    h.TextSize = 14
+    h.TextXAlignment = Enum.TextXAlignment.Left
+    b.MouseButton1Click:Connect(function() mostrar(nome) end)
+    return p
+end
+
+local function novoBotao(parent, txt, y, call)
+    local b = Instance.new("TextButton", parent)
+    b.Size = UDim2.new(1, -20, 0, 32)
+    b.Position = UDim2.new(0, 10, 0, y)
+    b.BackgroundColor3 = EL
+    b.Text = txt
+    b.TextColor3 = TXT
+    b.Font = Enum.Font.Gotham
+    b.TextSize = 12
+    b.BorderSizePixel = 0
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+    b.MouseButton1Click:Connect(function() if call then call() end end)
+end
+
+local function novoToggle(parent, txt, y, call)
+    local r = Instance.new("Frame", parent)
+    r.Size = UDim2.new(1, -20, 0, 34)
+    r.Position = UDim2.new(0, 10, 0, y)
+    r.BackgroundColor3 = EL
+    r.BorderSizePixel = 0
+    Instance.new("UICorner", r).CornerRadius = UDim.new(0, 6)
+    local l = Instance.new("TextLabel", r)
+    l.Size = UDim2.new(1, -60, 1, 0)
+    l.Position = UDim2.new(0, 10, 0, 0)
+    l.BackgroundTransparency = 1
+    l.Text = txt
+    l.TextColor3 = TXT
+    l.Font = Enum.Font.Gotham
+    l.TextSize = 12
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    local s = Instance.new("TextButton", r)
+    s.Size = UDim2.new(0, 40, 0, 20)
+    s.Position = UDim2.new(1, -48, 0.5, -10)
+    s.BackgroundColor3 = Color3.fromRGB(50,50,60)
+    s.Text = ""
+    s.BorderSizePixel = 0
+    s.AutoButtonColor = false
+    Instance.new("UICorner", s).CornerRadius = UDim.new(1, 0)
+    local k = Instance.new("Frame", s)
+    k.Size = UDim2.new(0, 14, 0, 14)
+    k.Position = UDim2.new(0, 3, 0.5, -7)
+    k.BackgroundColor3 = Color3.fromRGB(200,200,210)
+    k.BorderSizePixel = 0
+    Instance.new("UICorner", k).CornerRadius = UDim.new(1, 0)
+    local st = false
+    s.MouseButton1Click:Connect(function()
+        st = not st
+        if st then
+            TS:Create(s, TweenInfo.new(0.15), {BackgroundColor3 = AC}):Play()
+            TS:Create(k, TweenInfo.new(0.15), {Position = UDim2.new(1, -17, 0.5, -7)}):Play()
+        else
+            TS:Create(s, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(50,50,60)}):Play()
+            TS:Create(k, TweenInfo.new(0.15), {Position = UDim2.new(0, 3, 0.5, -7)}):Play()
+        end
+        if call then call(st) end
+    end)
+end
+
+local function novoStatus(parent, txt, y, h)
+    local l = Instance.new("TextLabel", parent)
+    l.Size = UDim2.new(1, -20, 0, h or 60)
+    l.Position = UDim2.new(0, 10, 0, y)
+    l.BackgroundColor3 = EL
+    l.Text = "  " .. txt
+    l.TextColor3 = DIM
+    l.Font = Enum.Font.Gotham
+    l.TextSize = 11
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.TextYAlignment = Enum.TextYAlignment.Top
+    l.TextWrapped = true
+    l.BorderSizePixel = 0
+    Instance.new("UICorner", l).CornerRadius = UDim.new(0, 6)
+    return l
+end
+
+local pgMain = novaAba("Main", "Principal")
+local pgFarm = novaAba("Farm", "Auto Farm Level")
+local pgFruit = novaAba("Fruit", "Auto Girar Fruta")
+local pgUnlock = novaAba("Unlock", "Auto Unlock")
+
+novoBotao(pgMain, "Pular Alto", 34, function()
+    local ch = plr.Character
+    if ch and ch:FindFirstChild("HumanoidRootPart") then
+        ch.HumanoidRootPart.Velocity = Vector3.new(0, 100, 0)
+    end
+end)
+
+novoBotao(pgMain, "Velocidade 50", 72, function()
+    local ch = plr.Character
+    if ch and ch:FindFirstChild("Humanoid") then ch.Humanoid.WalkSpeed = 50 end
+end)
+
+local stFarm = novoStatus(pgFarm, "Parado", 72, 90)
+local stFruit = novoStatus(pgFruit, "Aguardando...", 72, 90)
+local stUnlock = novoStatus(pgUnlock, "Aguardando...", 72, 90)
+
+local drag, ds, sp = false, nil, nil
+tb.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        drag = true
+        ds = i.Position
+        sp = win.Position
+        i.Changed:Connect(function()
+            if i.UserInputState == Enum.UserInputState.End then drag = false end
+        end)
+    end
+end)
+UIS.InputChanged:Connect(function(i)
+    if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+        local d = i.Position - ds
+        win.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
+    end
+end)
+
+cb.MouseButton1Click:Connect(function()
+    autoFarmAtivo = false
+    autoFruitAtivo = false
+    autoUnlockAtivo = false
+    sg:Destroy()
+end)
+
+UIS.InputBegan:Connect(function(i, g)
+    if g then return end
+    if i.KeyCode == Enum.KeyCode.RightControl then
+        win.Visible = not win.Visible
+    end
+end)
+
+mostrar("Main")
+print("UI CARREGADA")
+
+task.spawn(function()
+    local ok, err = pcall(function()
+        print("INICIANDO LOGICA")
+
+        local quests = {
+            {L=1,   M="Bandit",              QN="BanditQuest1",   QL=1},
+            {L=10,  M="Monkey",              QN="JungleQuest",    QL=1},
+            {L=15,  M="Gorilla",             QN="JungleQuest",    QL=2},
+            {L=30,  M="Pirate",              QN="BuggyQuest1",    QL=1},
+            {L=40,  M="Brute",               QN="BuggyQuest1",    QL=2},
+            {L=60,  M="Desert Bandit",       QN="DesertQuest",    QL=1},
+            {L=75,  M="Desert Officer",      QN="DesertQuest",    QL=2},
+            {L=90,  M="Snow Bandit",         QN="SnowQuest",      QL=1},
+            {L=100, M="Snowman",             QN="SnowQuest",      QL=2},
+            {L=120, M="Chief Petty Officer", QN="MarineQuest2",   QL=1},
+            {L=150, M="Sky Bandit",          QN="SkyQuest",       QL=1},
+            {L=175, M="Dark Master",         QN="SkyQuest",       QL=2},
+            {L=190, M="Prisoner",            QN="PrisonerQuest",  QL=1},
+            {L=210, M="Dangerous Prisoner",  QN="PrisonerQuest",  QL=2},
+            {L=250, M="Toga Warrior",        QN="ColosseumQuest", QL=1},
+            {L=275, M="Gladiator",           QN="ColosseumQuest", QL=2},
+            {L=300, M="Military Soldier",    QN="MagmaQuest",     QL=1},
+            {L=325, M="Military Spy",        QN="MagmaQuest",     QL=2},
+            {L=375, M="Fishman Warrior",     QN="FishmanQuest",   QL=1},
+            {L=400, M="Fishman Commando",    QN="FishmanQuest",   QL=2},
+            {L=450, M="God's Guard",         QN="SkyExp1Quest",   QL=1},
+            {L=475, M="Shanda",              QN="SkyExp1Quest",   QL=2},
+            {L=525, M="Royal Squad",         QN="SkyExp2Quest",   QL=1},
+            {L=550, M="Royal Soldier",       QN="SkyExp2Quest",   QL=2},
+            {L=625, M="Galley Pirate",       QN="FountainQuest",  QL=1},
+            {L=650, M="Galley Captain",      QN="FountainQuest",  QL=2},
+            {L=700, M="Raider",              QN="Area1Quest",     QL=1},
+            {L=725, M="Mercenary",           QN="Area1Quest",     QL=2},
+            {L=775, M="Swan Pirate",         QN="Area2Quest",     QL=1},
+            {L=800, M="Factory Staff",       QN="Area2Quest",     QL=2},
+            {L=875, M="Marine Lieutenant",   QN="MarineQuest3",   QL=1},
+            {L=900, M="Marine Captain",      QN="MarineQuest3",   QL=2},
+            {L=950, M="Zombie",              QN="ZombieQuest",    QL=1},
+            {L=975, M="Vampire",             QN="ZombieQuest",    QL=2},
+            {L=1000,M="Snow Trooper",        QN="SnowQuest3",     QL=1},
+            {L=1050,M="Winter Warrior",      QN="SnowQuest3",     QL=2},
+            {L=1100,M="Lab Subordinate",     QN="LabQuest",       QL=1},
+            {L=1125,M="Horned Warrior",      QN="LabQuest",       QL=2},
+            {L=1175,M="Magma Ninja",         QN="MagmaQuest2",    QL=1},
+            {L=1200,M="Lava Pirate",         QN="MagmaQuest2",    QL=2},
+            {L=1250,M="Ship Deckhand",       QN="ShipQuest1",     QL=1},
+            {L=1275,M="Ship Engineer",       QN="ShipQuest1",     QL=2},
+            {L=1300,M="Ship Steward",        QN="ShipQuest2",     QL=1},
+            {L=1325,M="Ship Officer",        QN="ShipQuest2",     QL=2},
+            {L=1350,M="Arctic Warrior",      QN="FrostQuest",     QL=1},
+            {L=1375,M="Snow Lurker",         QN="FrostQuest",     QL=2},
+            {L=1425,M="Sea Soldier",         QN="ForgottenQuest", QL=1},
+            {L=1450,M="Water Fighter",       QN="ForgottenQuest", QL=2},
+            {L=1500,M="Pirate Millionaire",  QN="PiratePortQuest",QL=1},
+            {L=1525,M="Pistol Billionaire",  QN="PiratePortQuest",QL=2},
+            {L=1575,M="Dragon Crew Warrior", QN="DragonCrewQuest",QL=1},
+            {L=1600,M="Dragon Crew Archer",  QN="DragonCrewQuest",QL=2},
+            {L=1625,M="Hydra Enforcer",      QN="HydraQuest",     QL=1},
+            {L=1650,M="Venomous Assailant",  QN="HydraQuest",     QL=2},
+            {L=1700,M="Marine Commodore",    QN="GreatTreeQuest", QL=1},
+            {L=1725,M="Marine Rear Admiral", QN="GreatTreeQuest", QL=2},
+            {L=1775,M="Fishman Raider",      QN="TurtleQuest",    QL=1},
+            {L=1800,M="Fishman Captain",     QN="TurtleQuest",    QL=2},
+            {L=1825,M="Forest Pirate",       QN="DeepForestQuest",QL=1},
+            {L=1850,M="Mythological Pirate", QN="DeepForestQuest",QL=2},
+            {L=1900,M="Jungle Pirate",       QN="DeepForestQuest2",QL=1},
+            {L=1925,M="Musketeer Pirate",    QN="DeepForestQuest2",QL=2},
+            {L=1975,M="Reborn Skeleton",     QN="HauntedQuest1",  QL=1},
+            {L=2000,M="Living Zombie",       QN="HauntedQuest1",  QL=2},
+            {L=2025,M="Demonic Soul",        QN="HauntedQuest2",  QL=1},
+            {L=2050,M="Possessed Mummy",     QN="HauntedQuest2",  QL=2},
+            {L=2075,M="Peanut Scout",        QN="PeanutQuest",    QL=1},
+            {L=2100,M="Peanut President",    QN="PeanutQuest",    QL=2},
+            {L=2125,M="Ice Cream Chef",      QN="IceCreamQuest",  QL=1},
+            {L=2150,M="Ice Cream Commander", QN="IceCreamQuest",  QL=2},
+            {L=2200,M="Cookie Crafter",      QN="CakeQuest1",     QL=1},
+            {L=2225,M="Cake Guard",          QN="CakeQuest1",     QL=2},
+            {L=2250,M="Baking Staff",        QN="CakeQuest2",     QL=1},
+            {L=2275,M="Head Baker",          QN="CakeQuest2",     QL=2},
+            {L=2300,M="Cocoa Warrior",       QN="ChocolateQuest1",QL=1},
+            {L=2325,M="Chocolate Bar Battler",QN="ChocolateQuest1",QL=2},
+            {L=2350,M="Sweet Thief",         QN="ChocolateQuest2",QL=1},
+            {L=2375,M="Candy Rebel",         QN="ChocolateQuest2",QL=2},
+            {L=2400,M="Candy Pirate",        QN="CandyCaneQuest", QL=1},
+            {L=2425,M="Snow Demon",          QN="CandyCaneQuest", QL=2},
+            {L=2450,M="Isle Outlaw",         QN="TikiQuest1",     QL=1},
+            {L=2475,M="Island Boy",          QN="TikiQuest1",     QL=2},
+            {L=2500,M="Sun-kissed Warrior",  QN="TikiQuest2",     QL=1},
+            {L=2525,M="Isle Champion",       QN="TikiQuest2",     QL=2},
+            {L=2550,M="Serpent Hunter",      QN="TikiQuest3",     QL=1},
+            {L=2575,M="Skull Slayer",        QN="TikiQuest3",     QL=2},
+            {L=2600,M="Reef Bandit",         QN="SubmergedQuest1",QL=1},
+            {L=2625,M="Coral Pirate",        QN="SubmergedQuest1",QL=2},
+            {L=2650,M="Sea Chanter",         QN="SubmergedQuest2",QL=1},
+            {L=2675,M="Ocean Prophet",       QN="SubmergedQuest2",QL=2},
+            {L=2700,M="High Disciple",       QN="SubmergedQuest3",QL=1},
+            {L=2725,M="Grand Devotee",       QN="SubmergedQuest3",QL=2},
+        }
+
+        local ESTILOS = {"Combat", "Black Leg", "Electro", "Fishman Karate", "Superhuman",
+            "Death Step", "Sharkman Karate", "Electric Claw", "Dragon Talon", "Godhuman", "Sanguine Art"}
+
+        local function getLvl()
+            local d = plr:FindFirstChild("Data")
+            if d and d:FindFirstChild("Level") then return d.Level.Value end
+            return 1
+        end
+
+        local function getQ(lv)
+            local q = quests[1]
+            for _, v in ipairs(quests) do
+                if v.L <= lv then q = v else break end
+            end
+            return q
+        end
+
+        local function acharInimigo(nome)
+            local ch = plr.Character
+            if not ch or not ch:FindFirstChild("HumanoidRootPart") then return nil end
+            local pos = ch.HumanoidRootPart.Position
+            local best, bd = nil, math.huge
+            for _, o in ipairs(workspace:GetDescendants()) do
+                if o:IsA("Model") and o.Name:lower():find(nome:lower(), 1, true) then
+                    local hrp = o:FindFirstChild("HumanoidRootPart")
+                    local hum = o:FindFirstChildOfClass("Humanoid")
+                    if hrp and hum and hum.Health > 0 then
+                        local d = (hrp.Position - pos).Magnitude
+                        if d < bd then bd = d; best = o end
+                    end
+                end
+            end
+            return best
+        end
+
+        local function equipar()
+            local ch = plr.Character
+            if not ch then return end
+            local hum = ch:FindFirstChildOfClass("Humanoid")
+            if not hum then return end
+            local eq = ch:FindFirstChildOfClass("Tool")
+            if eq then
+                for _, n in ipairs(ESTILOS) do
+                    if eq.Name:lower():find(n:lower(), 1, true) then return end
+                end
+            end
+            local bp = plr:FindFirstChild("Backpack")
+            if not bp then return end
+            for _, n in ipairs(ESTILOS) do
+                for _, it in ipairs(bp:GetChildren()) do
+                    if it:IsA("Tool") and it.Name:lower():find(n:lower(), 1, true) then
+                        hum:EquipTool(it)
+                        return
+                    end
+                end
+            end
+        end
+
+        local function aceitar(q)
+            if not q.QN then return end
+            pcall(function() RS.Remotes.CommF_:InvokeServer("StartQuest", q.QN, q.QL) end)
+        end
+
+        local function atacar()
+            local ch = plr.Character
+            if not ch then return end
+            local t = ch:FindFirstChildOfClass("Tool")
+            if t then pcall(function() t:Activate() end) end
+            pcall(function() game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0)) end)
+        end
+
+        local function loopFarm()
+            while autoFarmAtivo do
+                local ch = plr.Character
+                if ch and ch:FindFirstChild("HumanoidRootPart") then
+                    local lv = getLvl()
+                    local q = getQ(lv)
+                    if not missaoAtual or missaoAtual.L ~= q.L then
+                        missaoAtual = q
+                        killCount = 0
+                        aceitar(q)
+                        ultimaTentativa = tick()
+                        task.wait(0.5)
+                    end
+                    if tick() - ultimaTentativa > 15 then
+                        aceitar(q)
+                        ultimaTentativa = tick()
+                    end
+                    local alvo = acharInimigo(q.M)
+                    if alvo and alvo:FindFirstChild("HumanoidRootPart") then
+                        local hrp = alvo.HumanoidRootPart
+                        local hum = alvo:FindFirstChildOfClass("Humanoid")
+                        local myH = ch.HumanoidRootPart
+                        myH.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 4, 0.5), hrp.Position)
+                        myH.Velocity = Vector3.new(0, 0, 0)
+                        equipar()
+                        if hum and hum.Health > 0 then
+                            for _ = 1, 5 do
+                                atacar()
+                                task.wait(0.1)
+                            end
+                            stFarm.Text = "  Nv " .. lv .. " | " .. q.M .. " | HP " .. math.floor(hum.Health) .. " | Kills " .. killCount
+                        else
+                            killCount = killCount + 1
+                        end
+                    else
+                        stFarm.Text = "  Nv " .. lv .. " | Procurando " .. q.M .. "..."
+                    end
+                end
+                task.wait(0.1)
+            end
+            stFarm.Text = "  Parado"
+        end
+
+        local function temBeli()
+            local d = plr:Fin
